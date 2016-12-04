@@ -1,11 +1,12 @@
 var roleHarvester = require('role.harvester');
 var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
-require('memory.main');
 var roleBase = require('role.base');
 var creepCreator = require('room.creepCreator');
 var creepAction = require('creep.action');
 var creepActions = require('creep.actions');
+
+require('memory.source');
 
 var spawnManager = require('spawn.manager');
 
@@ -22,7 +23,7 @@ module.exports.loop = function () {
     var sources = spawn.room.find(FIND_SOURCES);
     for(var i = 0; i < sources.length; i++) {
         var source = sources[i];
-        source.refreshMemory(false);
+        source.refreshMemory(true);
     }
     
     // for(var roomName in Game.rooms) {

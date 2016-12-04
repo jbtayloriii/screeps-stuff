@@ -90,7 +90,6 @@ Creep.prototype.getStructureIdNeedingEnergyWithPriority = function(priority, car
 
 Creep.prototype.getRepairId = function() {
     if(this.memory.currentRepairId) {
-        console.log("test");
         var repairObj = Game.getObjectById(this.memory.currentRepairId);
         
         //for now, just repair up to 20000
@@ -103,7 +102,7 @@ Creep.prototype.getRepairId = function() {
         filter: (structure) => (structure.hits < structure.hitsMax) && (structure.hits <= 20000)
     });
     
-    if (structures) {
+    if (structures.length > 0) {
         this.memory.currentRepairId = structures[0].id;
         return this.memory.currentRepairId;
     }
