@@ -8,55 +8,62 @@
  */
  
  var creepActions = require('creep.actions');
+ var functions = creepActions.functions;
+ var actions = creepActions.actions;
  var creepRoles = require('creep.roles');
 
 function setupCreepActionMemory(creep, roleChart) {
-    
-    creep.memory.action = {};
-    creep.memory.action.actions = roleChart;
-    creep.memory.action.currentAction = 1;
-    
+    console.log("Setting up role memory for " + creep.name);
+    if(!roleChart) {
+        console.log("Error with role chart for creep " + creep.name);
+        return;
+    }
+    delete creep.memory.action;
+    creep.memory.action = roleChart;
+    creep.memory.action.currentAction = creep.memory.action.start;
     creep.memory.roleMapped = true;
 }
 
 Creep.prototype.act = function() {
-    var currentStep = this.memory.action.currentAction;
-    if(!currentStep) {
-        console.log(this.name + " has error with step " + currentStep);
-        return;
-    }
-    
-    if(!this.memory.action.actions) {
+    if(!this.memory.action) {
         console.log(this.name + " has no actions");
         creepAction.setupCreep(this);
         return;
     }
     
-    
-    var currentAction = this.memory.action.actions[currentStep];
-    var args = {};
-    args.priority = currentAction.priority;
-    
-    var returnVal;
-    //var returnVal = currentAction.action(this, args);
-    
-    if(currentAction.action == creepRoles.actions.harvestClosestSourceInRoom) {
-        returnVal = creepActions.harvestClosestSource(this);
-    } else if(currentAction.action == creepRoles.actions.returnEnergyToStructures) {
-        returnVal = creepActions.returnEnergyToStructures(this, args);
-    } else if(currentAction.action == creepRoles.actions.buildConstruction) {
-        returnVal = creepActions.buildConstruction(this);
+    var currentAction = this.memory.action.currentAction;
+    if(!currentAction) {
+        console.log(this.name + " has an error performing action " + currentAction);
+        return;
     }
     
-    if(returnVal == -1) {
-        //queue alt action if possible
-        var altAction = currentAction.alt;
-        if(altAction) {
-            this.memory.action.currentAction = altAction;
+    if(!this.memory.action.actions) {
+        console.log(this.name + " has no actions");
+        if(this.memory.role) {
+            console.log("Attempting to setup creep again with role " + this.memory.role);
+            creepAction.setupCreep(this);
         }
+        return;
+    }
+    
+    
+    var currentActionObject = this.memory.action.actions[currentAction];
+    
+    var actionFunction = currentActionObject.action;
+    if(!(typeof functions[actionFunction] === "function")) {
+        console.log(this.name + " Action " + actionFunction + " is not a function");
+        return;
+    }
+    var args = currentActionObject.args;
+    
+    //test
+    var returnVal = functions[actionFunction](this, args);
+    
+    if(returnVal == -1) {
+        //Not doing anything with -1 return right now
     } else if (returnVal == 1) {
         //move to next step
-        var nextAction = currentAction.next;
+        var nextAction = currentActionObject.next;
         if(nextAction) {
             this.memory.action.currentAction = nextAction;
         }
@@ -65,20 +72,12 @@ Creep.prototype.act = function() {
     }
 }
  
- var creepAction = {
-     setupCreep : function(creep) {
-         var role = creep.memory.role;
-         if(role == 'harvester') {
-            console.log(role);
-            setupCreepActionMemory(creep, creepRoles.role[role]);
-             
-         }
-         
-        //  if(role == 'harvester') {
-        //      setupCreepActionMemory(creep, creepRoles.role.harvesterRole);
-        //  }
-     }
- }
+var creepAction = {
+    setupCreep : function(creep) {
+        var role = creep.memory.role;
+        setupCreepActionMemory(creep, creepRoles.role[role]);
+    }
+}
  
 
 module.exports = creepAction;

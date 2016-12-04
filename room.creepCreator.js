@@ -11,6 +11,8 @@
  
 var maxCreeps = 10; //maximum creeps per spawn room
 
+
+
 var creepCreator = {
     
     
@@ -19,6 +21,44 @@ var creepCreator = {
             return true;
         }
         return false;
+    },
+    
+    getCreepRoleNeeded : function(mRoom) {
+        var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
+        var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
+        var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
+        var repairers = _.filter(Game.creeps, (creep) => creep.memory.role == 'repairer');
+        
+        if(harvesters.length == 0) {
+            return "harvester";
+        }
+        if(upgraders.length == 0) {
+            return "upgrader";
+        }
+        if(repairers.length == 0) {
+            return "repairer";
+        }
+        if(mRoom.find(FIND_CONSTRUCTION_SITES).length > 0 && builders.length == 0) {
+            return "builder";
+        }
+        
+        if(harvesters.length < 4) {
+            return "harvester";
+        }
+        
+        if(upgraders.length < 3) {
+            return "upgrader";
+        }
+        
+        return "repairer";
+    },
+    
+    queueCreep : function(room) {
+        
+    },
+    
+    getBody : function(spawn) {
+        
     },
 
     createCreep : function(spawn) {

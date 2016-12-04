@@ -7,9 +7,9 @@
  * mod.thing == 'a thing'; // true
  */
  
-require('roomMemory');
+require('memory.room');
 
-var creepLog = true;
+var creepLog = false;
  
 Creep.prototype.getClosestEnergySourceId = function() {
     if(this.memory.currentEnergySourceId) {
@@ -38,11 +38,12 @@ Creep.prototype.getClosestEnergySourceId = function() {
 
 Creep.prototype.getConstructionId = function() {
     if (this.memory.currentConstructionTargetId) {
-        var construction = this.room.find(FIND_CONSTRUCTION_SITES);
+        return this.memory.currentConstructionTargetId;
     }
+    var construction = this.room.find(FIND_CONSTRUCTION_SITES);
     
-    if(targets.length) {
-        return targets[0].id;
+    if(construction.length) {
+        return construction[0].id;
     }
     return null;
 }
@@ -85,6 +86,29 @@ Creep.prototype.getStructureIdNeedingEnergyWithPriority = function(priority, car
     } else {
         return null;
     }
+}
+
+Creep.prototype.getRepairId = function() {
+    if(this.memory.currentRepairId) {
+        console.log("test");
+        var repairObj = Game.getObjectById(this.memory.currentRepairId);
+        
+        //for now, just repair up to 20000
+        if(repairObj && repairObj.hits < repairObj.hitsMax && repairObj.hits <= 20000) {
+            return this.memory.currentRepairId;
+        }
+    }
+    
+    var structures = this.room.find(FIND_STRUCTURES, {
+        filter: (structure) => (structure.hits < structure.hitsMax) && (structure.hits <= 20000)
+    });
+    
+    if (structures) {
+        this.memory.currentRepairId = structures[0].id;
+        return this.memory.currentRepairId;
+    }
+    
+    return null;
 }
 
 Creep.prototype.forgetCurrentSourceId = function() {

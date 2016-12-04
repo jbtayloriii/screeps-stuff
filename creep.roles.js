@@ -7,26 +7,72 @@
  * mod.thing == 'a thing'; // true
  */
  
- var creepActions = require('creep.actions');
-
- var actions = {
-     harvestClosestSourceInRoom : 1,
-     returnEnergyToStructures : 2,
-     buildConstruction : 3
- }
+var creepActions = require('creep.actions');
+var functions = creepActions.functions;
+var actions = creepActions.actions;
+var actions2 = creepActions.actions2;
  
- module.exports.role = {};
+module.exports.role = {};
 
 module.exports.role.harvester = {
-    1 : {"action" : actions.harvestClosestSourceInRoom, "next" : 2 },
-    2 : {"action" : actions.returnEnergyToStructures, "next" : 1, "priority" : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_CONTAINER], "alt" : 3 },
-    3 : {"action" : actions.buildConstruction, "next" : 1 }
-};
+    start : "harvest",
+    
+    actions : {
+        "harvest" : {
+            action : actions2.harvestClosestSource,
+            next : "returnToStructure"
+        },
+        "returnToStructure" : {
+            action : actions2.returnEnergyToStructures,
+            next : "harvest",
+            args : {
+                priority : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_CONTAINER]
+            }
+        }
+    }
+}
+
+
+module.exports.role.upgrader = {
+    start : "harvest",
+    actions : {
+        "harvest" : {
+            action : actions2.harvestClosestSource,
+            next : "upgrade"
+        },
+        "upgrade" : {
+            action : actions2.upgradeSource,
+            next : "harvest"
+        }
+    }
+}
+
+module.exports.role.repairer = {
+    start : "harvest",
+    actions : {
+        "harvest" : {
+            action : actions2.harvestClosestSource,
+            next : "repair"
+        },
+        "repair" : {
+            action : actions2.repairBuilding,
+            next : "harvest"
+        }
+    }
+}
 
 module.exports.role.builder = {
-    1 : {"action" : actions.harvestClosestSourceInRoom, "next" : 2 },
-    2 : {"action" : actions.buildConstruction, "next" : 1, "alt" : 3 },
-    3 : {"action" : actions.harvestClosestSourceInRoom, "next" : 2 } //switch this for repairing or something
+    start : "harvest",
+    actions : {
+        "harvest" : {
+            action : actions2.harvestClosestSource,
+            next : "build"
+        },
+        "build" : {
+            action : actions2.buildConstruction,
+            next : "harvest"
+        }
+    }
 }
 
 

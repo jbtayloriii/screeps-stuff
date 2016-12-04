@@ -33,6 +33,7 @@ function isMapped(spawn) {
 function mapSpawnObject(spawn) {
     
     var spawnInfo = {};
+    spawnInfo.nextCreep = "";
     //spawnInfo.creeps = spawn.room.creeps.length;
     
     return spawnInfo;
@@ -46,7 +47,6 @@ function mapSpawnObject(spawn) {
      }
      var spawnMemory = mapSpawnObject(this);
      
-     console.log("test");
      this.memory.info = spawnMemory;
      this.memory.mapped = true;
      

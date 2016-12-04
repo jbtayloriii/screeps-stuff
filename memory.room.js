@@ -55,7 +55,10 @@ Room.prototype.refreshMemory = function(hardRefresh) {
     if(this.memory.mapped && !hardRefresh) {
         return this;
     }
-     
+    console.log("Refreshing memory for room " + this.name);
+    
+    delete Memory.rooms[this.name];
+    mapSources(this);
     this.memory.mapped = true;
     return this;
 }

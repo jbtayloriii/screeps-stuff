@@ -1,4 +1,4 @@
-var roomMemory = require('roomMemory');
+var roomMemory = require('memory.room');
 var spawnMemory = require('memory.spawn');
 
 var bodies = {
