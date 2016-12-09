@@ -8,17 +8,17 @@
  */
  
  var creepCreator = require('room.creepCreator');
- 
-var maxCreeps = 10;
+var constants = require('base.constants');
  
 var roomManager = {
     manage : function(mRoom) {
-        roomManager.manageCreeps(mRoom);
+        //roomManager.manageCreeps(mRoom);
     },
     
     manageCreeps : function(mRoom){
+        return;
         var creepCount = mRoom.find(FIND_MY_CREEPS).length;
-        if(creepCount < maxCreeps && !mRoom.memory.creepQueue) {
+        if(creepCount < constants.maxCreeps && !mRoom.memory.creepQueue) {
             var role = creepCreator.getCreepRoleNeeded(mRoom);
 
             mRoom.memory.creepQueue = role;

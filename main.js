@@ -1,10 +1,10 @@
-var roleHarvester = require('role.harvester');
-var roleUpgrader = require('role.upgrader');
-var roleBuilder = require('role.builder');
 var roleBase = require('role.base');
 var creepCreator = require('room.creepCreator');
 var creepAction = require('creep.action');
 var creepActions = require('creep.actions');
+var memoryMain = require('memory.main');
+
+require('prototype.tower');
 
 require('memory.source');
 
@@ -16,43 +16,28 @@ var memorySpawn = require('memory.spawn');
 
 module.exports.loop = function () {
     var spawn = Game.spawns['spawn1'];
-    spawn.refreshMemory();
     
     testLog.testLogLoopFunc();
     
-    var sources = spawn.room.find(FIND_SOURCES);
-    for(var i = 0; i < sources.length; i++) {
-        var source = sources[i];
-        source.refreshMemory(true);
-    }
-    
-    // for(var roomName in Game.rooms) {
-    //     roomManager.manage(Game.rooms[roomName]);
-    // }
-    
     spawnManager.manage(spawn);
     
-    //spawn.room.refreshMemory(true);
-    
-    
-    for(var name in Memory.creeps) {
-        if(!Game.creeps[name]) {
-            delete Memory.creeps[name];
-            //console.log('Clearing non-existing creep memory:', name);
-        }
-    }
+    //Refresh indices and everything, switch to true to do a hard reset
+    memoryMain.refreshMemory(false);
 
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
-        
-        //reset all creeps if needed
-        //creepAction.setupCreep(creep);
-        
-        if(!creep.memory.roleMapped) {
-            creepAction.setupCreep(creep);
-        }
-        creep.room.refreshMemory(false);
-        
         creep.act();
+    }
+    
+    for(var roomName in Game.rooms) {
+        towers = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
+            filter: { structureType: STRUCTURE_TOWER }
+        });
+        for(var i = 0; i < towers.length; i++) {
+            var tower = towers[i];
+            if(!tower.attackEnemy()) {
+                tower.repairStructures();
+            }
+        }
     }
 }

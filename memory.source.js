@@ -15,22 +15,41 @@ Source.prototype.getAvailableUsers = function() {
 
 Source.prototype.addCreep = function(creep) {
     this.refreshMemory(false);
-    if(Memory.sources[this.id].openSpaces <= 0) {
+    if(Memory.sources[this.id].currentUsers >= Memory.sources[this.id].openSpaces) {
         return false;
     }
     
-    if(Memory.sources[this.id].harvestingEnergy <= 0) {
-        return false;
-    }
-    
-    Memory.sources[this.id].users.push(creep.id);
-    Memory.sources[this.id].openSpaces--;
+    Memory.sources[this.id].users.push(creep.name);
+    Memory.sources[this.id].currentUsers++;
     Memory.sources[this.id].harvestingEnergy -= creep.carryCapacity;
-    if(harvestingEnergy < 0) {
-        harvestingEnergy = 0;
+    if(Memory.sources[this.id].harvestingEnergy < 0) {
+        Memory.sources[this.id].harvestingEnergy = 0;
     }
     
     return true;
+}
+
+Source.prototype.removeCreep = function(creepName) {
+    this.refreshMemory(false);
+    for(var i = 0; i < Memory.sources[this.id].users.length; i++) {
+        if(Memory.sources[this.id].users[i] == creepName) {
+            Memory.sources[this.id].users.splice(i, 1);
+            Memory.sources[this.id].currentUsers--;
+        }
+        
+        if(!Memory.sources[this.id].sourceContainer) {
+            continue;
+        }
+        
+        if(Memory.sources[this.id].sourceContainer.user == creepName) {
+            Memory.sources[this.id].sourceContainer.user == null;
+            Memory.sources[this.id].sourceContainer.inUse = false;
+        }
+        
+        if(Memory.sources[this.id].sourceContainer.carrier == creepName) {
+            Memory.sources[this.id].sourceContainer.carrier = null;
+        }
+    }
 }
 
 function getSourceMemoryLocation(sourceId) {
@@ -45,21 +64,32 @@ function mapSource(source, memoryObj) {
     console.log("Mapping source " + source);
     memoryObj.x = source.pos.x;
     memoryObj.y = source.pos.y;
+    
     var openSpaces = 0;
-    //get the open spaces
     for(var x = memoryObj.x - 1; x <= memoryObj.x + 1; x++) {
         for(var y = memoryObj.y - 1; y <= memoryObj.y + 1; y++) {
             var look = source.room.getPositionAt(x, y).look();
             look.forEach(function(lookObject) {
-                if(lookObject.type == LOOK_TERRAIN && lookObject[LOOK_TERRAIN] != 'wall') {
+                if((lookObject.type == LOOK_TERRAIN) && (lookObject[LOOK_TERRAIN] != 'wall')) {
                     openSpaces++;
+                }
+                
+                if((lookObject.type == LOOK_STRUCTURES) && (lookObject[LOOK_STRUCTURES].structureType == STRUCTURE_CONTAINER)) {
+                    //console.log(lookObject[LOOK_STRUCTURES].id);
+                    memoryObj.sourceContainer = {
+                        x : x,
+                        y : y,
+                        inUse: false,
+                        user : null,
+                        containerId : lookObject[LOOK_STRUCTURES].id
+                    }
                 }
             });
         }
     }
     
     memoryObj.currentEnergy = source.energy;
-    memoryObj.users = {};
+    memoryObj.users = [];
     memoryObj.harvestingEnergy = source.energy;
     
     memoryObj.currentUsers = 0;
@@ -67,6 +97,10 @@ function mapSource(source, memoryObj) {
 }
  
 Source.prototype.refreshMemory = function(hardRefresh) {
+    if(hardRefresh && Memory.sources) {
+        console.log("Hard refresh on source " + this.id);
+        delete Memory.sources[this.id];
+    }
     
     if(!Memory.sources) {
         Memory.sources = {};

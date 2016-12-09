@@ -9,35 +9,111 @@
  
 var creepActions = require('creep.actions');
 var functions = creepActions.functions;
-var actions = creepActions.actions;
-var actions2 = creepActions.actions2;
+var actions2 = creepActions.actions;
  
 module.exports.role = {};
+
+module.exports.role.powerHarvester = {
+    start : "harvest",
+    actions : {
+        "harvest" : {
+            action : actions2.powerHarvestSource,
+            next : "harvest"
+        }
+    }
+}
+
+module.exports.role.returnEnergyAndDie = {
+    start : "returnEnergy",
+    actions : {
+        "returnEnergy" : {
+            action : actions2.returnEnergyToStructures,
+            next : "die",
+            args : {
+                priority : [STRUCTURE_STORAGE]
+            }
+        },
+        "die" : {
+            action : actions2.die,
+            next : "returnEnergy"
+        }
+    }
+}
+
+module.exports.role.carrierTower = {
+    start : "getResources",
+    actions : {
+        "getResources" : {
+            action : actions2.getClosestEnergyStorage,
+            next : "store"
+        },
+        "store" : {
+            action : actions2.returnEnergyToStructures,
+            next : "getResources",
+            args : {
+                priority : [STRUCTURE_TOWER]
+            }
+        }
+    }
+}
+
+module.exports.role.carrierCreepSpawn = {
+    start : "getResources",
+    actions : {
+        "getResources" : {
+            action : actions2.getClosestEnergyStorage,
+            next : "store"
+        },
+        "store" : {
+            action : actions2.returnEnergyToStructures,
+            next : "getResources",
+            args : {
+                priority : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN]
+            }
+        }
+    }
+}
+
+module.exports.role.carrierStorage = {
+    start : "getResources",
+    actions : {
+        "getResources" : {
+            action : actions2.getCarrierContainerEnergy,
+            next : "store",
+        },
+        "store" : {
+            action : actions2.returnEnergyToStructures,
+            next : "getResources",
+            args : {
+                priority : [STRUCTURE_STORAGE]
+            }
+        }
+    }
+}
 
 module.exports.role.harvester = {
     start : "harvest",
     
     actions : {
         "harvest" : {
-            action : actions2.harvestClosestSource,
+            action : actions2.getClosestEnergyStorage,
             next : "returnToStructure"
         },
         "returnToStructure" : {
             action : actions2.returnEnergyToStructures,
             next : "harvest",
             args : {
-                priority : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_CONTAINER]
+                priority : [STRUCTURE_STORAGE, STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_TOWER, STRUCTURE_CONTAINER]
             }
         }
     }
 }
 
-
 module.exports.role.upgrader = {
     start : "harvest",
     actions : {
         "harvest" : {
-            action : actions2.harvestClosestSource,
+            action : actions2.getClosestEnergyStorage,
             next : "upgrade"
         },
         "upgrade" : {
@@ -51,7 +127,7 @@ module.exports.role.repairer = {
     start : "harvest",
     actions : {
         "harvest" : {
-            action : actions2.harvestClosestSource,
+            action : actions2.getClosestEnergyStorage,
             next : "repair"
         },
         "repair" : {
@@ -65,7 +141,7 @@ module.exports.role.builder = {
     start : "harvest",
     actions : {
         "harvest" : {
-            action : actions2.harvestClosestSource,
+            action : actions2.getClosestEnergyStorage,
             next : "build"
         },
         "build" : {
@@ -74,6 +150,84 @@ module.exports.role.builder = {
         }
     }
 }
+
+module.exports.longDistanceHarvester = {
+    start : "travel",
+    actions : {
+        "travel" : {
+            action : actions2.harvestClosestSource
+        }
+    }
+}
+
+// module.exports.role.harvester = {
+//     start : "harvest",
+    
+//     actions : {
+//         "harvest" : {
+//             action : actions2.harvestClosestSource,
+//             next : "returnToStructure"
+//         },
+//         "returnToStructure" : {
+//             action : actions2.returnEnergyToStructures,
+//             next : "harvest",
+//             args : {
+//                 priority : [STRUCTURE_STORAGE, STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_TOWER, STRUCTURE_CONTAINER]
+//             }
+//         }
+//     }
+// }
+
+// module.exports.role.upgrader = {
+//     start : "harvest",
+//     actions : {
+//         "harvest" : {
+//             action : actions2.harvestClosestSource,
+//             next : "upgrade"
+//         },
+//         "upgrade" : {
+//             action : actions2.upgradeSource,
+//             next : "harvest"
+//         }
+//     }
+// }
+
+// module.exports.role.repairer = {
+//     start : "harvest",
+//     actions : {
+//         "harvest" : {
+//             action : actions2.harvestClosestSource,
+//             next : "repair"
+//         },
+//         "repair" : {
+//             action : actions2.repairBuilding,
+//             next : "harvest"
+//         }
+//     }
+// }
+
+// module.exports.role.builder = {
+//     start : "harvest",
+//     actions : {
+//         "harvest" : {
+//             action : actions2.harvestClosestSource,
+//             next : "build"
+//         },
+//         "build" : {
+//             action : actions2.buildConstruction,
+//             next : "harvest"
+//         }
+//     }
+// }
+
+// module.exports.longDistanceHarvester = {
+//     start : "travel",
+//     actions : {
+//         "travel" : {
+//             action : actions2.harvestClosestSource
+//         }
+//     }
+// }
 
 
 module.exports.actions = creepActions;

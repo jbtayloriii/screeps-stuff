@@ -8,5 +8,10 @@
  */
  
 const LOG_DEBUG = false;
+module.exports.repairCutoff = 10000;
+module.exports.criticalRepairCutoff = 100;
+module.exports.maxCreeps = 16;
 
-module.exports = null;
+module.exports.ERR_SOURCES_FULL = -1;
+module.exports.ERR_SOURCES_NO_ENERGY = -2;
+module.exports.ERR_NO_CONSTRUCTION = -900;

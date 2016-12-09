@@ -8,8 +8,7 @@
  */
 
  var creepCreator = require('room.creepCreator');
- 
-var maxCreeps = 10;
+var constants = require('base.constants');
  
 var spawnManager = {
     manage : function(spawn) {
@@ -18,12 +17,13 @@ var spawnManager = {
     },
     
     manageCreeps : function(spawn){
+        spawn.refreshMemory(false);
         if(spawn.canCreateCreep([MOVE]) == ERR_BUSY) {
             return;
         }
         
         var creepCount = spawn.room.find(FIND_MY_CREEPS).length;
-        if(creepCount < maxCreeps && !Memory.spawns[spawn.name].creepQueue) {
+        if(creepCount < constants.maxCreeps && !Memory.spawns[spawn.name].creepQueue && spawn.canCreateCreep([WORK]) != ERR_BUSY) {
             var role = creepCreator.getCreepRoleNeeded(spawn.room);
 
             Memory.spawns[spawn.name].creepQueue = role;
@@ -36,10 +36,12 @@ var spawnManager = {
         }
         var role = Memory.spawns[spawn.name].creepQueue;
         if(role) {
-            if(spawn.canCreateCreep) {
-                spawn.createCreep([WORK,CARRY,MOVE], undefined, {role: role});
+            var body = creepCreator.getBestBody(role, spawn.room.energyCapacityAvailable);
+            var result = spawn.createCreep(body, undefined, {role: role, spawnId: spawn.id});
+            //console.log(spawn.name + " is thinking about creating " + role + " with body " + body);
+            if(_.isString(result)) {
                 delete Memory.spawns[spawn.name].creepQueue;
-                console.log("Creating creep at spawn " + spawn.name + " with role " + role + " with body " + "body test");
+                console.log("Creating creep " + result + " at spawn " + spawn.name + " with role " + role + " with body " + body + " using energy " + spawn.room.energyCapacityAvailable);
             }
         }
     }

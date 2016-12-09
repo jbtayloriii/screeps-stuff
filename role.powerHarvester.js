@@ -3,20 +3,14 @@
  * module.exports.thing = 'a thing';
  *
  * You can import it from another modules like this:
- * var mod = require('testLog');
+ * var mod = require('role.powerHarvester');
  * mod.thing == 'a thing'; // true
  */
- 
-var creepRoles = require('creep.roles');
-var creepActions = require('creep.actions');
 
-
-var testLog = {
+module.exports = {
     
-    
-    testLogLoopFunc : function() {
-
+    getBody : function() {
+        return [WORK,WORK,WORK,WORK,WORK,MOVE];
     }
-}
 
-module.exports = testLog;
+};

@@ -42,6 +42,10 @@ function mapSpawnObject(spawn) {
 }
 
  StructureSpawn.prototype.refreshMemory = function(hardRefresh) {
+    if(!Memory.spawns) {
+        Memory.spawns = {};
+    }
+     
      if(this.memory.mapped && !hardRefresh) {
          return this;
      }
