@@ -65,12 +65,14 @@ Creep.prototype.act = function() {
     //}
 
     
-    if(returnVal == -3) {
-        console.log(this.name + " is removing itself");
+    if(returnVal == -3 || (this.ticksToLive < 50 && this.memory.role != 'powerHarvester')) {
         //Remove the creep
-        this.memory.role = 'returnEnergyAndDie';
-        this.memory.action = roles.role['returnEnergyAndDie'];
-        this.memory.action.currentAction = "returnEnergy";
+        if(!(this.memory.role == 'returnEnergyAndDie')){
+            console.log(this.name + " is removing itself");
+            this.memory.role = 'returnEnergyAndDie';
+            this.memory.action = roles.role['returnEnergyAndDie'];
+            this.memory.action.currentAction = "returnEnergy";
+        }
     } else if (returnVal == 1) {
         //move to next step
         var nextAction = currentActionObject.next;

@@ -9,6 +9,7 @@
  
 var logMsg = true;
 var constants = require('base.constants');
+var memoryWar = require('memory.war');
  
  
 module.exports.actions = {
@@ -18,8 +19,11 @@ module.exports.actions = {
     upgradeSource : "upgradeSource",
     repairBuilding : "repairBuilding",
     getClosestEnergyStorage : 'getClosestEnergyStorage',
+    travelToRoom : 'travelToRoom',
+    travelToSpawnRoom : 'travelToSpawnRoom',
     powerHarvestSource : 'powerHarvestSource',
     getCarrierContainerEnergy : 'getCarrierContainerEnergy',
+    meleeAttackEnemies : 'meleeAttackEnemies',
     die : 'die'
 }
  
@@ -73,14 +77,19 @@ module.exports.functions = {
     },
     
     powerHarvestSource : function(creep, args) {
-        sourceCont = creep.getOpenPowerSourcePosition();
+        var sourceCont = creep.getOpenPowerSourcePosition();
         if(!sourceCont) {
+            console.log(creep.name + " cannot find a source to power harvest");
             return 0;
         }
         if(!(creep.pos.x == sourceCont.pos.x) || !(creep.pos.y == sourceCont.pos.y)) {
             creep.moveTo(sourceCont.pos);
+            if(creep.pos.x == sourceCont.pos.x && creep.pos.y == sourceCont.pos.y) {
+                //Memory.sources[sourceCont.sourceId].mapPowerHarvestTime(CREEP_LIFE_TIME - creep.ticksToLive);
+            }
             return 0;
         }
+        
         
         var harvestCode = creep.harvest(Game.getObjectById(sourceCont.sourceId));
         return 0;
@@ -93,23 +102,23 @@ module.exports.functions = {
         
         
         if(creep.memory.currentCarrierSourceContainerId) {
-            containerObj = Game.getObjectById(creep.memory.currentCarrierSourceContainerId);
-            if(containerObj) {
+            if(Memory.sources[creep.memory.currentCarrierSourceId].storageCarrier == creep.name) {
+                containerObj = Game.getObjectById(creep.memory.currentCarrierSourceContainerId);
                 goodObj = true;
             }
         }
         
         if(!goodObj) {
             var sourceInfo = creep.room.memory.sources;
-            for(var i = 0; i < sourceInfo.length; i++) {
+            for(var i = 0; i < sourceInfo.length && !creep.memory.currentCarrierSourceId; i++) {
                 var sourceId = sourceInfo[i];
-                if(!Memory.sources[sourceId].sourceContainer || Memory.sources[sourceId].sourceContainer.carrier) {
-                    continue;
+                var sourceObj = Game.getObjectById(sourceId);
+                if(sourceObj.addCreepCarrierStorage(creep)) {
+                    creep.memory.currentCarrierSourceContainerId = Memory.sources[sourceId].sourceContainer.containerId;
+                    creep.memory.currentCarrierSourceId = sourceId;
+                    console.log(creep.name + " carrying for source " + sourceId);
+                    containerObj = Game.getObjectById(creep.memory.currentCarrierSourceContainerId);
                 }
-                Memory.sources[sourceId].sourceContainer.carrier = creep.name;
-                creep.memory.currentCarrierSourceContainerId = Memory.sources[sourceId].sourceContainer.containerId;
-                console.log(creep.name + " carrying for source " + sourceId);
-                containerObj = Game.getObjectById(creep.memory.currentCarrierSourceContainerId);
             }
         }
         
@@ -118,7 +127,7 @@ module.exports.functions = {
             return 0;
         }
         
-        transferCode = creep.withdraw(containerObj, RESOURCE_ENERGY);
+        var transferCode = creep.withdraw(containerObj, RESOURCE_ENERGY);
         if(creep.carry.energy == creep.carryCapacity) {
             return 1;
         }
@@ -130,6 +139,36 @@ module.exports.functions = {
         return -2;
     },
     
+    meleeAttackEnemies : function(creep,args) {
+        var enemy;
+        enemy = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+        if(!enemy) {
+            enemy = creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES);
+        }
+        if(!enemy) {
+            enemy = creep.pos.findClosestByPath(FIND_HOSTILE_SPAWNS);
+        }
+        if(!enemy) {
+            //enemy = creep.pos.findClosestByPath(FIND_HOSTILE_CONSTRUCTION_SITES);
+        }
+        
+        if(enemy) {
+            //console.log(creep.name + " is attacking " + enemy)
+            if(creep.attack(enemy) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(enemy);
+                return 0;
+            }
+            return 0;
+        } else {
+            console.log(creep.name + " is removing room " + creep.memory.targetRoom + " from war with our room " + creep.memory.spawnId);
+            memoryWar.removeWarTarget(Game.getObjectById(creep.memory.spawnId).room, creep.memory.targetRoom);
+            return -3;
+        }
+        
+        return 0;
+        
+    },
+    
     getClosestEnergyStorage : function(creep, args) {
         var storageId = creep.getClosestEnergyStorageId(args.priority);
         var storageObj = Game.getObjectById(storageId);
@@ -138,7 +177,7 @@ module.exports.functions = {
             return 0;
         }
         
-        transferCode = creep.withdraw(storageObj, RESOURCE_ENERGY);
+        var transferCode = creep.withdraw(storageObj, RESOURCE_ENERGY);
         if(creep.carry.energy == creep.carryCapacity) {
             return 1;
         }

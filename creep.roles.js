@@ -23,6 +23,61 @@ module.exports.role.powerHarvester = {
     }
 }
 
+module.exports.role.expansionPowerHarvester = {
+    start : "findRoom",
+    actions : {
+        "findRoom" : {
+            action : actions2.travelToRoom,
+            next : "harvest"
+        },
+        "harvest" : {
+            action : actions2.powerHarvestSource,
+            next : "harvest"
+        }
+    }
+}
+
+module.exports.role.fighter = {
+    start : "findRoom",
+    actions : {
+        "findRoom" : {
+            action : actions2.travelToRoom,
+            next : "fight"
+        },
+        "fight" : {
+            action : actions2.meleeAttackEnemies,
+            next : "fight"
+        }
+    }
+}
+
+
+//TODO
+module.exports.role.expansionStorageCarrier = {
+    start : "findRoom",
+    actions : {
+        "findRoom" : {
+            action : actions2.travelToRoom,
+            next : "getEnergy"
+        },
+        "getEnergy" : {
+            action : actions2.getCarrierContainerEnergy,
+            next : "findSpawn"
+        },
+        "findSpawn" : {
+            action : actions2.travelToSpawnRoom,
+            next : "deposit"
+        },
+        "deposit" : {
+            action : actions2.returnEnergyToStructures,
+            next : "findRoom",
+            args : {
+                priority : [STRUCTURE_STORAGE]
+            }
+        }
+    }
+}
+
 module.exports.role.returnEnergyAndDie = {
     start : "returnEnergy",
     actions : {
@@ -68,7 +123,7 @@ module.exports.role.carrierCreepSpawn = {
             action : actions2.returnEnergyToStructures,
             next : "getResources",
             args : {
-                priority : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN]
+                priority : [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN]
             }
         }
     }
@@ -96,14 +151,14 @@ module.exports.role.harvester = {
     
     actions : {
         "harvest" : {
-            action : actions2.getClosestEnergyStorage,
+            action : actions2.harvestClosestSource,
             next : "returnToStructure"
         },
         "returnToStructure" : {
             action : actions2.returnEnergyToStructures,
             next : "harvest",
             args : {
-                priority : [STRUCTURE_STORAGE, STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_TOWER, STRUCTURE_CONTAINER]
+                priority : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_TOWER, STRUCTURE_CONTAINER]
             }
         }
     }

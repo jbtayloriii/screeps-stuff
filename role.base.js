@@ -33,7 +33,7 @@ Creep.prototype.getClosestEnergySourceId = function() {
             continue;
         }
         sourceWithEnergy = true;
-        if(source && source.addCreep(this)) {
+        if(source) {
             //console.log("Creep " + this.name + " on source " + source.id);
             this.memory.currentEnergySourceId = sourceId;
             return source.id;
@@ -72,17 +72,15 @@ Creep.prototype.getOpenPowerSourcePosition = function() {
     var sourceInfo = this.room.memory.sources;
     for(var i =0; i < sourceInfo.length; i++) {
         var sourceId = sourceInfo[i];
-        if(! Memory.sources[sourceId].sourceContainer || Memory.sources[sourceId].sourceContainer.inUse) {
-            continue;
+        var sourceObj = Game.getObjectById(sourceId);
+        if(sourceObj.addCreepPowerHarvester(this)) {
+            var returnObj = {
+                pos : new RoomPosition(Memory.sources[sourceId].sourceContainer.x, Memory.sources[sourceId].sourceContainer.y, this.room.name),
+                sourceId : sourceId
+            };
+            this.memory.currentPowerSourceId = sourceId;
+            return returnObj;
         }
-        var returnObj = {
-            pos : new RoomPosition(Memory.sources[sourceId].sourceContainer.x, Memory.sources[sourceId].sourceContainer.y, this.room.name),
-            sourceId : sourceId
-        };
-        Memory.sources[sourceId].sourceContainer.inUse = true;
-        Memory.sources[sourceId].sourceContainer.user = this.name;
-        this.memory.currentPowerSourceId = sourceId;
-        return returnObj;
     }
     
     return null;

@@ -15,6 +15,8 @@ var testLog = require('testLog');
 var memorySpawn = require('memory.spawn');
 
 module.exports.loop = function () {
+    //console.log(Game.time);
+    
     var spawn = Game.spawns['spawn1'];
     
     testLog.testLogLoopFunc();
@@ -30,7 +32,7 @@ module.exports.loop = function () {
     }
     
     for(var roomName in Game.rooms) {
-        towers = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
+        var towers = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
             filter: { structureType: STRUCTURE_TOWER }
         });
         for(var i = 0; i < towers.length; i++) {

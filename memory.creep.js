@@ -37,6 +37,11 @@ Creep.prototype.refreshMemory = function(hardRefresh) {
         delete this.memory.currentTargetStructureId;
         delete this.memory.currentConstructionTargetId;
         delete this.memory.currentRepairId;
+        
+        delete this.memory.currentEnergyStorageId;
+        delete this.memory.currentPowerSourceId;
+        delete this.memory.currentCarrierSourceId;
+        delete this.memory.currentCarrierSourceContainerId;
     }
 
     if(this.memory.mapped && !hardRefresh) {
@@ -53,8 +58,8 @@ module.exports.deleteCreep = function(creepName) {
         var source = Game.getObjectById(Memory.creeps[creepName].currentEnergySourceId);
         source.removeCreep(creepName);
     }
-    if(Memory.creeps[creepName].currentCarrierSourceContainerId) {
-        var source = Game.getObjectById(Memory.creeps[creepName].currentCarrierSourceContainerId);
+    if(Memory.creeps[creepName].currentCarrierSourceId) {
+        var source = Game.getObjectById(Memory.creeps[creepName].currentCarrierSourceId);
         source.removeCreep(creepName);
     }
     

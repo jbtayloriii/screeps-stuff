@@ -28,6 +28,11 @@ module.exports.harvester = {
     moveParts : 2
 };
 
+module.exports.fighter = {
+    template : [ATTACK],
+    moveParts : 1
+}
+
 module.exports.upgrader = {
     template : [WORK,CARRY,WORK,WORK],
     moveParts : 2

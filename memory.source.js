@@ -13,42 +13,54 @@ Source.prototype.getAvailableUsers = function() {
     return Memory.sources[this.id].openSpaces;
 }
 
-Source.prototype.addCreep = function(creep) {
+
+Source.prototype.addCreepPowerHarvester = function(creep) {
     this.refreshMemory(false);
-    if(Memory.sources[this.id].currentUsers >= Memory.sources[this.id].openSpaces) {
+    if(!Memory.sources[this.id].canPowerHarvest) {
         return false;
     }
     
-    Memory.sources[this.id].users.push(creep.name);
-    Memory.sources[this.id].currentUsers++;
-    Memory.sources[this.id].harvestingEnergy -= creep.carryCapacity;
-    if(Memory.sources[this.id].harvestingEnergy < 0) {
-        Memory.sources[this.id].harvestingEnergy = 0;
+    if(Memory.sources[this.id].powerHarvester) {
+        return false;
     }
     
+    Memory.sources[this.id].powerHarvester = creep.name;
+    return true;
+}
+
+Source.prototype.mapPowerHarvestTime = function(timeToMove) {
+    //TODO
+}
+
+Source.prototype.addCreepCarrierStorage = function(creep) {
+    this.refreshMemory(false);
+    if(!Memory.sources[this.id].canPowerHarvest) {
+        return false;
+    }
+    
+    if(Memory.sources[this.id].storageCarrier) {
+        return false;
+    }
+    
+    Memory.sources[this.id].storageCarrier = creep.name;
     return true;
 }
 
 Source.prototype.removeCreep = function(creepName) {
     this.refreshMemory(false);
-    for(var i = 0; i < Memory.sources[this.id].users.length; i++) {
-        if(Memory.sources[this.id].users[i] == creepName) {
-            Memory.sources[this.id].users.splice(i, 1);
-            Memory.sources[this.id].currentUsers--;
-        }
         
-        if(!Memory.sources[this.id].sourceContainer) {
-            continue;
-        }
-        
-        if(Memory.sources[this.id].sourceContainer.user == creepName) {
-            Memory.sources[this.id].sourceContainer.user == null;
-            Memory.sources[this.id].sourceContainer.inUse = false;
-        }
-        
-        if(Memory.sources[this.id].sourceContainer.carrier == creepName) {
-            Memory.sources[this.id].sourceContainer.carrier = null;
-        }
+    if(!Memory.sources[this.id].sourceContainer) {
+        console.log(this.id + " No source container when removing creep");
+        return;
+    }
+    
+    if(Memory.sources[this.id].powerHarvester == creepName) {
+        Memory.sources[this.id].powerHarvester = null;
+    }
+    
+    
+    if(Memory.sources[this.id].storageCarrier == creepName) {
+        Memory.sources[this.id].storageCarrier = null;
     }
 }
 
@@ -75,12 +87,12 @@ function mapSource(source, memoryObj) {
                 }
                 
                 if((lookObject.type == LOOK_STRUCTURES) && (lookObject[LOOK_STRUCTURES].structureType == STRUCTURE_CONTAINER)) {
-                    //console.log(lookObject[LOOK_STRUCTURES].id);
+                    memoryObj.canPowerHarvest = true;
+                    memoryObj.powerHarvester = null;
+                    memoryObj.storageCarrier = null;
                     memoryObj.sourceContainer = {
                         x : x,
                         y : y,
-                        inUse: false,
-                        user : null,
                         containerId : lookObject[LOOK_STRUCTURES].id
                     }
                 }
@@ -88,11 +100,6 @@ function mapSource(source, memoryObj) {
         }
     }
     
-    memoryObj.currentEnergy = source.energy;
-    memoryObj.users = [];
-    memoryObj.harvestingEnergy = source.energy;
-    
-    memoryObj.currentUsers = 0;
     memoryObj.openSpaces = openSpaces;
 }
  
