@@ -9,13 +9,23 @@
  
 var creepRoles = require('creep.roles');
 var creepActions = require('creep.actions');
+var journal = require('log.journal');
+var memoryExpansion = require('memory.expansions');
+var memoryOwned = require('memory.ownedRooms');
 
 
 var testLog = {
     
     
     testLogLoopFunc : function() {
-
+        return;
+        var roomName = 'W73S47';
+        for(var key in memoryOwned.getExpansions(roomName)) {
+            console.log(key);
+        }
+        return;
+        console.log(memoryExpansion.createNewExpansion('W73S47','W74S47'));
+        console.log(memoryExpansion.getOpenSources(roomName));
     }
 }
 

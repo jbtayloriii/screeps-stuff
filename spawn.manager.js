@@ -25,21 +25,16 @@ var spawnManager = {
         if(creepCount == constants.maxCreeps) {
             return;
         }
-        var role = creepCreator.getCreepRoleNeeded(spawn.room);
-        //console.log("Need role: " + role);
-        if(role) {
-            var body = creepCreator.getBestBody(role, spawn.room.energyCapacityAvailable);
-            var memoryObj = {role: role, spawnId: spawn.id};
-            if(role == 'fighter') {
-                var targetRoom = 'W73S46';
-                memoryObj.targetRoom = targetRoom;
-                console.log("Creating fighter to go to room " + targetRoom);
-            }
-            var result = spawn.createCreep(body, undefined, memoryObj);
+        var memObj = creepCreator.getMemoryObjNeeded(spawn.room);
+        //console.log("Need role: " + memObj.role);
+        if(memObj && memObj.role) {
+            var body = creepCreator.getBestBody(memObj.role, spawn.room.energyCapacityAvailable);
+            memObj.spawnId = spawn.id;
+            var result = spawn.createCreep(body, undefined, memObj);
             
             //console.log(spawn.name + " is thinking about creating " + role + " with body " + body);
             if(_.isString(result)) {
-                console.log("Creating creep " + result + " at spawn " + spawn.name + " with role " + role + " with body " + body + " using energy " + spawn.room.energyCapacityAvailable);
+                console.log("Creating creep " + result + " at spawn " + spawn.name + " with role " + memObj.role + " with body " + body + " using energy " + spawn.room.energyCapacityAvailable);
             }
         }
     }

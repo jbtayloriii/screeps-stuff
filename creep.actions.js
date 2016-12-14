@@ -10,6 +10,8 @@
 var logMsg = true;
 var constants = require('base.constants');
 var memoryWar = require('memory.war');
+var journal = require('log.journal');
+var roomExpansion = require('room.expansion');
  
  
 module.exports.actions = {
@@ -24,6 +26,7 @@ module.exports.actions = {
     powerHarvestSource : 'powerHarvestSource',
     getCarrierContainerEnergy : 'getCarrierContainerEnergy',
     meleeAttackEnemies : 'meleeAttackEnemies',
+    claimControllerInRoom : 'claimControllerInRoom',
     die : 'die'
 }
  
@@ -188,6 +191,31 @@ module.exports.functions = {
         }
         return -2;
     },
+    
+    claimControllerInRoom : function(creep, args) {
+        var spawnObj = Game.getObjectById(creep.memory.spawnId);
+        if(roomExpansion.registerCreepForExpansion(spawnObj.room.name, creep.memory.targetRoom, creep.id)) {
+            creep.memory.claimRoomId = creep.memory.targetRoom;
+        } else {
+            console.log("cannot add");
+            //journal.addEntry(creep.name + " cannot add itself as the claimer to room " + creep.memory.targetRoom);
+            return 0;
+        }
+        
+        if(!(creep.memory.targetRoom == creep.room.name)) {
+            console.log("cannot add2");
+            journal.addEntry(creep.name + " is in the wrong room to claim, moving to next action");
+            return 0;
+        }
+        
+        var targetContObj = creep.room.controller;
+        
+        var claimCode = creep.reserveController(targetContObj);
+        if(claimCode == ERR_NOT_IN_RANGE) {
+            creep.moveTo(targetContObj);
+        }
+        return 0;
+    },
 
     //args : priority - a list of the priority to return energy to structures
     returnEnergyToStructures : function(creep, args) {
@@ -318,6 +346,7 @@ module.exports.functions = {
     travelToRoom : function(creep, args) {
         var roomName = creep.memory.targetRoom;
         if(creep.room.name == roomName) {
+            console.log(creep.name + " found their way to room " + roomName);
             return 1;
         } else {
             var exit = creep.room.findExitTo(roomName);

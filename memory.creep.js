@@ -8,6 +8,7 @@
  */
  
 var creepRoles = require('creep.roles');
+var memoryExpansion = require('memory.expansions');
 
 Creep.prototype.setupCreepActionMemory = function(creep, role) {
     var roleChart = creepRoles.role[role];
@@ -24,6 +25,13 @@ Creep.prototype.setupCreepActionMemory = function(creep, role) {
 Creep.prototype.setupRole = function(role) {
     if(!this.memory.role) {
         this.memory.role = role;
+    }
+     
+    if(this.memory.role == 'claimer' && this.memory.targetRoom) {
+        if(memoryExpansion.setClaimerName(this.memory.targetRoom, this.name)) {
+            console.log('was able to set myself as the claimer');
+        }
+        
     }
     
     console.log("Setting up role memory for " + this.name + " with role " + role);
@@ -58,6 +66,20 @@ module.exports.deleteCreep = function(creepName) {
         var source = Game.getObjectById(Memory.creeps[creepName].currentEnergySourceId);
         source.removeCreep(creepName);
     }
+    
+    if(Memory.creeps[creepName].role == 'claimer') {
+        //console.log(creepName + ": Removing myself as claimer from ");
+
+        
+    }
+    
+    if(Memory.creeps[creepName].claimRoomId) {
+        //return;
+        var sourceRoom = Game.getObjectById(Memory.creeps[creepName].spawnId).room;
+        console.log(sourceRoom);
+        Memory.rooms[sourceRoom.name].expansions[Memory.creeps[creepName].claimRoomId].claimer = null;
+    }
+    
     if(Memory.creeps[creepName].currentCarrierSourceId) {
         var source = Game.getObjectById(Memory.creeps[creepName].currentCarrierSourceId);
         source.removeCreep(creepName);

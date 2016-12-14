@@ -11,7 +11,9 @@ var creepBodies = require('creep.body');
 var constants = require('base.constants');
 var powerHarvester = require('role.powerHarvester');
 var memoryWar = require('memory.war');
-var memoryExpansion = require('expansion.memory');
+var memoryExpansion = require('memory.expansions');
+var memoryOwned = require('memory.ownedRooms');
+
 
 var partCost = {
     "work" : 100,
@@ -42,6 +44,107 @@ var creepCreator = {
         return false;
     },
     
+    getMemoryObjNeeded : function(mRoom) {
+        if(Object.keys(Game.creeps).length == 0) {
+            return {role : "harvester"};
+        }
+        
+        var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
+        var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
+        var repairers = _.filter(Game.creeps, (creep) => creep.memory.role == 'repairer');
+        var powerHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'powerHarvester');
+        var carrierTower = _.filter(Game.creeps, (creep) => creep.memory.role == 'carrierTower');
+        var carrierCreepSpawn = _.filter(Game.creeps, (creep) => creep.memory.role == 'carrierCreepSpawn');
+        var carrierStorage = _.filter(Game.creeps, (creep) => creep.memory.role == 'carrierStorage');
+        var fighters = _.filter(Game.creeps, (creep) => creep.memory.role == 'fighter');
+        var expansionPowerHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'expansionPowerHarvester');
+        var expansionStorageCarrier = _.filter(Game.creeps, (creep) => creep.memory.role == 'expansionStorageCarrier');
+        var claimers = _.filter(Game.creeps, (creep) => creep.memory.role == 'claimer');
+        
+
+        
+        var sites = mRoom.find(FIND_CONSTRUCTION_SITES).length;
+        var repairSites = getBuildingsNeedingRepair(mRoom);
+        
+        if(powerHarvesters.length == 0) {
+            return  {role : "powerHarvester"};
+        }
+        
+        if (carrierCreepSpawn.length == 0) {
+            return  {role : "carrierCreepSpawn"};
+        }
+        
+        if (carrierTower.length == 0) {
+            //return "carrierTower";
+        }
+        
+        if (carrierStorage.length == 0) {
+            return  {role : "carrierStorage"};
+        }
+        
+        if(upgraders.length == 0) {
+            return  {role : "upgrader"};
+        }
+        
+        if(powerHarvesters.length < Memory.rooms[mRoom.name].sources.length) {
+            return  {role : "powerHarvester"};
+        }
+        
+        if (carrierStorage.length < Memory.rooms[mRoom.name].sources.length) {
+            return  {role : "carrierStorage"};
+        }
+        
+        if(memoryExpansion.getExpansionCount(mRoom.name) > expansionPowerHarvesters.length) {
+            //console.log("expansions");
+        }
+        
+        //check expansions for adequate creeps
+        for(var expRoom in memoryOwned.getExpansions(mRoom.name)) {
+            if(!memoryExpansion.getClaimerName(expRoom)) {
+                //console.log("need a claimer in room " + expRoom);
+                //return  {
+                //    role : "claimer",
+                //    targetRoom : expRoom
+                //};
+            }
+        }
+
+        
+        if(sites > 0 && builders.length == 0) {
+            return  {role : "builder"};
+        }
+        
+        if(fighters.length < memoryWar.getWarTargetCountForRoom(mRoom)) {
+            //console.log("hello");
+            return  {
+                role : "fighter",
+                targetRoom : 'W73S46'
+            };
+        }
+        
+        
+        //Need to set up how to get repairer here
+        // if(repairSites > 0 && repairers.length == 0) {
+        //     //return "repairer";
+        // }
+        
+        if(sites > 0 && builders.length < 4) {
+            return  {role : "builder"};
+        }
+        
+        if(repairSites > 0 && repairers.length < 4) {
+            //return "repairer";
+        }
+        
+        //create upgraders to use extra energy in the room
+        if(upgraders.length < 8) { //|| mRoom.storage.store[RESOURCE_ENERGY] > 300000) {
+            return  {role : "upgrader"};
+        }
+        
+        return null;
+    },
+    
+    
     getCreepRoleNeeded : function(mRoom) {
         if(Object.keys(Game.creeps).length == 0) {
             return "harvester";
@@ -57,6 +160,7 @@ var creepCreator = {
         var fighters = _.filter(Game.creeps, (creep) => creep.memory.role == 'fighter');
         var expansionPowerHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'expansionPowerHarvester');
         var expansionStorageCarrier = _.filter(Game.creeps, (creep) => creep.memory.role == 'expansionStorageCarrier');
+        var claimers = _.filter(Game.creeps, (creep) => creep.memory.role == 'claimer');
         
         
         
@@ -95,6 +199,11 @@ var creepCreator = {
             //console.log("expansions");
         }
         
+        if(claimers < memoryExpansion.getExpansionsForRoom(mRoom.name)) {
+            console.log("need a claimer");
+            return "claimer";
+        }
+        
 
         
         if(sites > 0 && builders.length == 0) {
@@ -121,7 +230,7 @@ var creepCreator = {
         }
         
         //create upgraders to use extra energy in the room
-        if(upgraders.length < 6) { //|| mRoom.storage.store[RESOURCE_ENERGY] > 300000) {
+        if(upgraders.length < 8) { //|| mRoom.storage.store[RESOURCE_ENERGY] > 300000) {
             return "upgrader";
         }
         
@@ -140,12 +249,16 @@ var creepCreator = {
             return [CARRY,MOVE,CARRY,CARRY,MOVE,CARRY];
         }
         
+        if(role == "claimer") {
+            return [MOVE, MOVE, CLAIM, CLAIM];
+        }
+        
         
         //console.log("Energy capacity for this:" + maxEnergy);
         var currentBody = [];
         var currentIndex = 0;
         
-        maxEnergy = Math.min(maxEnergy, 600);
+        //maxEnergy = Math.min(maxEnergy, 600);
         
         if(!creepBodies[role]) {
             console.log("room.creepCreator: Error getting body for role " + role);

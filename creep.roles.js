@@ -51,6 +51,20 @@ module.exports.role.fighter = {
     }
 }
 
+module.exports.role.claimer = {
+    start : "findRoom",
+    actions : {
+        "findRoom" : {
+            action : actions2.travelToRoom,
+            next : "claim"
+        },
+        "claim" : {
+            action : actions2.claimControllerInRoom,
+            next : "findRoom"
+        }
+    }
+}
+
 
 //TODO
 module.exports.role.expansionStorageCarrier = {
