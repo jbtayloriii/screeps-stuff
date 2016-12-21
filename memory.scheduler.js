@@ -3,10 +3,13 @@
  * module.exports.thing = 'a thing';
  *
  * You can import it from another modules like this:
- * var mod = require('room.war');
+ * var mod = require('memory.scheduler');
  * mod.thing == 'a thing'; // true
  */
 
-module.export.getWarTargetsForRoom = function(mRoom) {
-    manualWar
+
+require('memory.core');
+
+module.exports = {
+
 };

@@ -7,6 +7,17 @@
  * mod.thing == 'a thing'; // true
  */
 
-module.exports = {
+require('memory.core');
 
-};
+module.exports.mapSource = function(mSourceObj) {
+    if(Memory.static.sources[mSourceObj.id]) {
+        return true;
+    }
+    
+    var sourceMemObj = {};
+    sourceMemObj.x = mSourceObj.pos.x;
+    sourceMemObj.x = mSourceObj.pos.y;
+    Memory.static.sources[mSourceObj.id] = sourceMemObj;
+    
+    return true;
+}

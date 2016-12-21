@@ -55,7 +55,7 @@ Creep.prototype.forgetCurrentSourceId = function() {
     if(sourceId) {
         //console.log("Creep " + this.name + " forgetting source " + this.memory.currentEnergySourceId);
         delete this.memory.currentEnergySourceId;
-        source.removeCreep(this.name);
+        //source.removeCreep(this.name);
     }
 }
 
@@ -137,6 +137,10 @@ Creep.prototype.getConstructionId = function() {
     if(construction.length) {
         return construction[0].id;
     }
+    if(Object.keys(Game.constructionSites).length > 0) {
+        //console.log("role.base test: " + Object.keys(Game.constructionSites)[0]);
+        return Object.keys(Game.constructionSites)[0];
+    }
     return constants.ERR_NO_CONSTRUCTION;
 }
 
@@ -190,35 +194,6 @@ Creep.prototype.getStructureIdNeedingEnergyWithPriority = function(priority, car
     } else {
         return null;
     }
-}
-
-Creep.prototype.getRepairId = function() {
-    if(this.memory.currentRepairId) {
-        var repairObj = Game.getObjectById(this.memory.currentRepairId);
-        
-        if(repairObj && repairObj.hits < repairObj.hitsMax && repairObj.hits <= constants.repairCutoff) {
-            return this.memory.currentRepairId;
-        } else {
-            delete this.memory.currentRepairId;
-        }
-    }
-    
-    var structureArr = this.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => (structure.hits < structure.hitsMax) && (structure.hits <= constants.criticalRepairCutoff)
-    });
-    
-    
-    if(!structureArr) {
-        structureArr = this.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (structure) => (structure.hits < structure.hitsMax) && (structure.hits <= constants.repairCutoff)
-        });
-    }
-    
-    if (structureArr) {
-        this.memory.currentRepairId = structureArr.id;
-        return this.memory.currentRepairId;
-    }
-    return null;
 }
 
 Creep.prototype.getCurrentEnergySource = function() {

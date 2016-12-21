@@ -9,8 +9,7 @@
  
 require('memory.room');
 require('memory.source');
-require('memory.spawn');
-var memoryCache = require('memory.cache');
+require('memory.core');
 var memoryCreep = require('memory.creep');
 
 
@@ -22,24 +21,12 @@ var memoryMain = {
             delete Memory.static;
         }
         
-        if(hardReset || !Memory.cache) {
-            memoryCache.reset();
-        }
-        
         if(!Memory.static) {
             Memory.static = {};
         }
         
         for(var roomName in Game.rooms) {
             Game.rooms[roomName].refreshMemory(hardReset);
-            var sources = Game.rooms[roomName].find(FIND_SOURCES);
-            for(var sourceName in sources) {
-                sources[sourceName].refreshMemory(hardReset);
-            }
-        }
-        
-        for(var spawnName in Game.spawns) {
-            Game.spawns[spawnName].refreshMemory(hardReset);
         }
         
 

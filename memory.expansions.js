@@ -10,20 +10,26 @@
 require('memory.core');
 var memoryStaticSource = require('memory.static.source');
 
-function initRoom(mRoomId, mParentRoomId) {
-    if(!Memory.expansionRooms[mRoomId]) {
+///////////////////
+//Helper functions
+///////////////////
+function initRoom(mRoomId, mParentRoomId, hardReset) {
+    if(!Memory.expansionRooms[mRoomId] || hardReset) {
         var roomMemObj = {};
         if(mParentRoomId) {
             roomMemObj.owningRoomId = mParentRoomId;
+            roomMemObj.claimerName = null;
+            roomMemObj.sourceHarvesters = {};
+            roomMemObj.storageCarriers = {};
+            roomMemObj.repairer = null;
         } else {
             roomMemObj.owningRoomId = null;
         }
         Memory.expansionRooms[mRoomId] = roomMemObj;
+        console.log("Created new expansionRoom memory for " + mRoomId);
     }
     
 }
-
-//public calls
 
 function getExpansionObj(mExpRoomId) {
     if(!Memory.expansionRooms[mExpRoomId]) {
@@ -32,13 +38,26 @@ function getExpansionObj(mExpRoomId) {
     return Memory.expansionRooms[mExpRoomId];
 }
 
-module.exports.createNewExpansion = function(mParentRoomId, mExpRoomId) {
+//////////////////
+//public functions
+//////////////////
+
+module.exports.getExpansionObject = function(mExpRoomId) {
+    return getExpansionObj(mExpRoomId);
+}
+
+module.exports.createNewExpansion = function(mParentRoomId, mExpRoomId, hardReset) {
     var expObj = getExpansionObj(mExpRoomId);
-    if(!expObj) {
-        initRoom(mExpRoomId, mParentRoomId);
+    console.log('test');
+    if(!expObj || hardReset) {
+        initRoom(mExpRoomId, mParentRoomId, hardReset);
         return true;
     }
     return false;
+}
+
+module.exports.resetExpansionMemory = function(mExpRoomId) {
+
 }
 
 module.exports.getClaimerName = function(mExpRoomId) {
@@ -61,6 +80,18 @@ module.exports.setClaimerName = function(mExpRoomId, claimerName) {
     return true;
 }
 
+module.exports.removeClaimer = function(mExpRoomId) {
+    var expObj = getExpansionObj(mExpRoomId);
+    if(!expObj) {
+        return false;
+    }
+    if(expObj.claimerName) {
+        expObj.claimerName = null;
+        return true;
+    }
+    return false;
+}
+
 module.exports.getPowerHarvesters = function(mExpRoomId) {
     var expObj = getExpansionObj(mExpRoomId);
     if(!expObj) {
@@ -69,26 +100,59 @@ module.exports.getPowerHarvesters = function(mExpRoomId) {
     return expObj.sourceHarvesters;
 }
 
-module.exports.addPowerHarvester = function(mExpRoomId, powerHarvesterId, sourceId) {
+module.exports.addPowerHarvester = function(mExpRoomId, powerHarvesterName, sourceId) {
     var expObj = getExpansionObj(mExpRoomId);
     if(!expObj) {
         return false;
     }
-    
-    return false;
+    if(!expObj.sourceHarvesters) {
+        return false;
+    }
+    if(expObj.sourceHarvesters[sourceId] && (expObj.sourceHarvesters[sourceId] != powerHarvesterName)) {
+        return false;
+    }
+
+    expObj.sourceHarvesters[sourceId] = powerHarvesterName;
+    return true;
 }
 
-module.exports.getOpenSources = function(mExpRoomId) {
+module.exports.getPowerHarvester = function(mExpRoomId, sourceId) {
     var expObj = getExpansionObj(mExpRoomId);
     if(!expObj) {
         return null;
+    }
+    if(!expObj.sourceHarvesters) {
+        return null;
+    }
+    return expObj.sourceHarvesters[sourceId];
+}
+
+module.exports.removePowerHarvester = function(mExpRoomId, sourceId) {
+    var expObj = getExpansionObj(mExpRoomId);
+    if(!expObj) {
+        return false;
+    }
+    if(!expObj.sourceHarvesters) {
+        return false;
+    }
+    if(!expObj.sourceHarvesters[sourceId]) {
+        return false;
+    }
+    expObj.sourceHarvesters[sourceId] = null;
+    return true;
+}
+
+module.exports.getOpenHarvestSources = function(mExpRoomName) {
+    var expObj = getExpansionObj(mExpRoomName);
+    if(!expObj) {
+        return [];
     }
     var sourceArr = [];
     if(!expObj.sourceHarvesters) {
         return sourceArr;
     }
     for(var source in expObj.sourceHarvesters) {
-        if (object.hasOwnProperty(property)) {
+        if (expObj.sourceHarvesters.hasOwnProperty(source)) {
             if(!expObj.sourceHarvesters[source]) {
                 sourceArr.push(source);
             }
@@ -97,7 +161,66 @@ module.exports.getOpenSources = function(mExpRoomId) {
     return sourceArr;
 }
 
+module.exports.addStorageCarrier = function(mExpRoomId, storageCarrierName, sourceId) {
+    var expObj = getExpansionObj(mExpRoomId);
+    if(!expObj) {
+        return false;
+    }
+    if(!expObj.storageCarriers) {
+        return false;
+    }
+    if((expObj.storageCarriers[sourceId]) && (expObj.storageCarriers[sourceId] != storageCarrierName)) {
+        return false;
+    }
 
+    expObj.storageCarriers[sourceId] = storageCarrierName;
+    return true;
+}
+
+module.exports.getStorageCarrier = function(mExpRoomId, sourceId) {
+    var expObj = getExpansionObj(mExpRoomId);
+    if(!expObj) {
+        return null;
+    }
+    if(!expObj.storageCarriers) {
+        return null;
+    }
+    return expObj.storageCarriers[sourceId];
+}
+
+module.exports.removeStorageCarrier = function(mExpRoomId, sourceId) {
+    var expObj = getExpansionObj(mExpRoomId);
+    if(!expObj) {
+        return false;
+    }
+    if(!expObj.storageCarriers) {
+        return false;
+    }
+    if(!expObj.storageCarriers[sourceId]) {
+        return false;
+    }
+    expObj.storageCarriers[sourceId] = null;
+    return true;
+}
+
+module.exports.getOpenStorageCarrierSources = function(mExpRoomName) {
+    var expObj = getExpansionObj(mExpRoomName);
+    if(!expObj) {
+        return [];
+    }
+    var sourceArr = [];
+    if(!expObj.storageCarriers) {
+        return sourceArr;
+    }
+    for(var source in expObj.storageCarriers) {
+        if (expObj.storageCarriers.hasOwnProperty(source)) {
+            if(!expObj.storageCarriers[source]) {
+                sourceArr.push(source);
+            }
+        }
+    }
+    return sourceArr;
+}
 
 //
 

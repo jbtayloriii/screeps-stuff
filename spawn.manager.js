@@ -7,12 +7,12 @@
  * mod.thing == 'a thing'; // true
  */
 
- var creepCreator = require('room.creepCreator');
+var creepCreator = require('room.creepCreator');
 var constants = require('base.constants');
+var creepMemory = require('memory.creep');
  
 var spawnManager = {
     manage : function(spawn) {
-        //spawnManager.manageCreeps(spawn);
         spawnManager.manageCreepQueue(spawn);
     },
     
@@ -34,7 +34,8 @@ var spawnManager = {
             
             //console.log(spawn.name + " is thinking about creating " + role + " with body " + body);
             if(_.isString(result)) {
-                console.log("Creating creep " + result + " at spawn " + spawn.name + " with role " + memObj.role + " with body " + body + " using energy " + spawn.room.energyCapacityAvailable);
+                //creepMemory.setupCreepMemory(result, role);
+                console.log("Creating creep " + result + " at spawn " + spawn.name + " with role " + memObj.role + " with body " + body);
             }
         }
     }

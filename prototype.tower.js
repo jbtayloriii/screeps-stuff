@@ -9,9 +9,7 @@
 var constants = require('base.constants');
  
 StructureTower.prototype.repairStructures = function() {
-    var room = this.room;
-    
-    
+    var room = this.room;    
  
     var structure = this.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => (structure.hits <= structure.hitsMax - 1000) && (structure.hits <= constants.repairCutoff)

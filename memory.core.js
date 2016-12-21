@@ -31,6 +31,21 @@ if(!Memory.baseMapped) {
     if(!Memory.ownedRooms) {
         Memory.ownedRooms = {};
     }
+
+    if(!Memory.scout) {
+        Memory.scout = {};
+    }
+    if(!Memory.scout.rooms) {
+        Memory.scout.rooms = {};
+    }
+
+    if(!Memory.sources) {
+        Memory.sources = {};
+    }
+
+    if(!Memory.schedulers) {
+        Memory.schedulers = {};
+    }
     
     Memory.baseMapped = true;
 }

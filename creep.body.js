@@ -6,9 +6,7 @@
  * var mod = require('creep.body');
  * mod.thing == 'a thing'; // true
  */
- 
- 
- 
+
 var template = {
     baseWork : {
         template : [WORK,CARRY,WORK,WORK],

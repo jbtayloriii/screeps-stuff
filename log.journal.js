@@ -9,17 +9,35 @@
 
 var logBase = require('log.base');
 var journalMaxSpace = 200; //max KB of journal space
+var notifications = require('notification');
+
+var disableJournal = false; //set to true to turn off journal if you are getting too many messages
 
 module.exports.addEntry = function(text) {
+    if(disableJournal) {
+        return;
+    }
     logBase.initLog();
     if(!text) {
         return;
     }
-    //TODO: remove the last oldest if we go over the max space
     
+    if(Memory.log.journal.entries.length > 100) {
+        sendMessages();
+    }
+
     Memory.log.journal.entries.push(Game.time + ": " + text);
 }
 
+function sendMessages() {
+    var entryCount = Math.min(100, Memory.log.journal.entries.length);
+    var entrySlice = Memory.log.journal.entries.slice(0, 2);
+    if(notifications.sendNotification(Memory.log.journal.entries.slice(0, entryCount), 'Journal')) {
+        Memory.log.journal.oldEntries += entryCount;
+        console.log('log.journal: ' + 'Sending last ' + entryCount + ' journal entries');
+        module.exports.deleteOldEntries();
+    }
+}
 
 module.exports.readNewEntries = function() {
     logBase.initLog();
@@ -49,7 +67,7 @@ module.exports.deleteOldEntries = function(maxDeleteCount) {
     if(deleteCount == 0) {
         return;
     }
-    console.log("Deleting oldest " + deleteCount + "journal entries.");
+    console.log("Deleting oldest " + deleteCount + " journal entries.");
     Memory.log.journal.entries.splice(0, deleteCount);
     Memory.log.journal.oldEntries = Math.max(0, Memory.log.journal.oldEntries - deleteCount);
 }

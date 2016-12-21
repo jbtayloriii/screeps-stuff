@@ -11,15 +11,16 @@ var memoryOwned = require('memory.ownedRooms');
 var memoryExpansion = require('memory.expansions');
 
 // var man = require('manual.expansion'); man.addExpansion(room, expansionRoom);
-// var man = require('manual.expansion'); man.addExpansion('W73S47', 'W74S47');
+// var man = require('manual.expansion'); man.addExpansion('W73S47', 'W74S47', false);
+// var man = require('manual.expansion'); man.addExpansion('W73S47', 'W74S47', true);
 module.exports = {
-    addExpansion(mRoomId, mExpRoomId) {
+    addExpansion(mRoomId, mExpRoomId, mReset) {
         var result = memoryOwned.addExpansion(mRoomId, mExpRoomId);
         if(!result) {
             console.log("Error adding expansion " + mExpRoomId + " to owned room " + mRoomId + " memory");
-            return;
+            //return;
         }
-        result = result && memoryExpansion.createNewExpansion(mRoomId, mExpRoomId);
+        result = memoryExpansion.createNewExpansion(mRoomId, mExpRoomId, mReset) && result;
         
         if(!result) {
             console.log("Error adding owned room " + mRoomId + " to expansion room " + mExpRoomId + " memory");

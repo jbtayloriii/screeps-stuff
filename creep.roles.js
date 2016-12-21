@@ -8,7 +8,6 @@
  */
  
 var creepActions = require('creep.actions');
-var functions = creepActions.functions;
 var actions2 = creepActions.actions;
  
 module.exports.role = {};
@@ -47,6 +46,24 @@ module.exports.role.fighter = {
         "fight" : {
             action : actions2.meleeAttackEnemies,
             next : "fight"
+        }
+    }
+}
+
+module.exports.role.scout = {
+    start : 'findRoom',
+    actions : {
+        'findRoom' : {
+            action : actions2.travelToRoom,
+            next : 'recordRoom'
+        },
+        'recordRoom' : {
+            action : actions2.recordRoom,
+            next : 'getNewScoutingRoom'
+        },
+        'getNewScoutingRoom' : {
+            action : actions2.getNewScoutingRoom,
+            next : 'findRoom'
         }
     }
 }
@@ -174,6 +191,21 @@ module.exports.role.harvester = {
             args : {
                 priority : [STRUCTURE_EXTENSION, STRUCTURE_SPAWN, STRUCTURE_TOWER, STRUCTURE_CONTAINER]
             }
+        }
+    }
+}
+
+module.exports.role.basicUpgrader = {
+    start : "harvest",
+    
+    actions : {
+        "harvest" : {
+            action : actions2.harvestClosestSource,
+            next : "harvest"
+        },
+        "upgrade" : {
+            action : actions2.upgradeSource,
+            next : "upgrade",
         }
     }
 }

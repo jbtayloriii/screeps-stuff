@@ -12,8 +12,15 @@ var constants = require('base.constants');
 var memoryWar = require('memory.war');
 var journal = require('log.journal');
 var roomExpansion = require('room.expansion');
+var memorySource = require('memory.source');
  
- 
+var actionReturnVal = {
+    nextAction : 1,
+    sameAction : 0,
+    killCreep : -3
+}
+
+
 module.exports.actions = {
     harvestClosestSource : "harvestClosestSource",
     returnEnergyToStructures : "returnEnergyToStructures",
@@ -27,21 +34,31 @@ module.exports.actions = {
     getCarrierContainerEnergy : 'getCarrierContainerEnergy',
     meleeAttackEnemies : 'meleeAttackEnemies',
     claimControllerInRoom : 'claimControllerInRoom',
+    recordRoom : 'recordRoom',
+    getNewScoutingRoom : 'getNewScoutingRoom',
     die : 'die'
 }
  
 module.exports.functions = {
+
+    recordRoom : function(creep, args) {
+        return actionReturnVal.sameAction;
+    },
+
+    getNewScoutingRoom : function(creep, args) {
+        return 1;
+    },
      
     harvestClosestSource : function(creep, args) {
         if(creep.carry.energy == creep.carryCapacity) {
             creep.forgetCurrentSourceId();
-            return 1;
+            return actionReturnVal.nextAction;
         }
         
         var sourceId = creep.getClosestEnergySourceId();
         if(sourceId == constants.ERR_SOURCES_FULL) {
             creep.say("Waiting on source");
-            return 0;
+            return actionReturnVal.sameAction;
         }
         if(!sourceId) {
             if(logMsg) {
@@ -80,26 +97,72 @@ module.exports.functions = {
     },
     
     powerHarvestSource : function(creep, args) {
-        var sourceCont = creep.getOpenPowerSourcePosition();
-        if(!sourceCont) {
-            console.log(creep.name + " cannot find a source to power harvest");
+        var sourceCont;
+        if(creep.memory.targetRoom && (creep.room.name != creep.memory.targetRoom)) {
+            console.log(creep.name + " is not in the correct room to power harvest");
+            var exit = creep.room.findExitTo(creep.memory.targetRoom);
+            creep.moveTo(creep.pos.findClosestByRange(exit));
             return 0;
-        }
-        if(!(creep.pos.x == sourceCont.pos.x) || !(creep.pos.y == sourceCont.pos.y)) {
-            creep.moveTo(sourceCont.pos);
-            if(creep.pos.x == sourceCont.pos.x && creep.pos.y == sourceCont.pos.y) {
-                //Memory.sources[sourceCont.sourceId].mapPowerHarvestTime(CREEP_LIFE_TIME - creep.ticksToLive);
+        }        
+        var harvestPos;
+        var harvestSourceId;
+
+        if(creep.memory.targetSource) {
+            //console.log(creep.name +"; " + creep.memory.targetSource);
+            harvestPos = memorySource.getPowerHarvesterHarvestPosition(creep.memory.targetSource);
+            if(!harvestPos) {
+                return 0;
             }
+            harvestSourceId = creep.memory.targetSource;
+        } else {
+            sourceCont = creep.getOpenPowerSourcePosition();
+            if(!sourceCont) {
+                journal.addEntry(creep.name + " cannot find a source to power harvest");
+                return 0;
+            }
+            harvestSourceId = sourceCont.sourceId;
+            harvestPos = sourceCont.pos;
+            if(!harvestPos) {
+                console.log('powerHarvest: trouble finding position for ' + creep.name);
+                return 0;
+            }
+        }
+        
+
+        if(!(creep.pos.x == harvestPos.x) || !(creep.pos.y == harvestPos.y)) {
+            creep.moveTo(harvestPos);
             return 0;
         }
         
         
-        var harvestCode = creep.harvest(Game.getObjectById(sourceCont.sourceId));
+        var harvestCode = creep.harvest(Game.getObjectById(harvestSourceId));
         return 0;
     },
     
     getCarrierContainerEnergy : function(creep, args) {
-        var containerObj;
+        var containerObj, sourceObj;
+        if(creep.memory.targetRoom && (creep.room.name != creep.memory.targetRoom)) {
+            var exit = creep.room.findExitTo(creep.memory.targetRoom);
+            creep.moveTo(creep.pos.findClosestByRange(exit));
+        }
+
+        if(creep.memory.targetSource) {
+            creep.memory.currentCarrierSourceId = creep.memory.targetSource;
+            sourceObj = Game.getObjectById(creep.memory.targetSource);
+            if((!Memory.sources[sourceId]) || (!Memory.sources[sourceId].sourceContainer)) {
+                //console.log(creep.name + " is picking things up, should get container built");
+                var resourceObj = creep.room.find(FIND_DROPPED_ENERGY);
+                var pickupCode = creep.pickup(resourceObj[0]);
+                //console.log(creep.name + resourceObj[0]);
+                if(pickupCode == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(resourceObj[0]);
+                }
+                if(creep.carry.energy == creep.carryCapacity) {
+                    return 1;
+                }
+                return 0;
+            }
+        }
         
         var goodObj = false;
         
@@ -115,7 +178,7 @@ module.exports.functions = {
             var sourceInfo = creep.room.memory.sources;
             for(var i = 0; i < sourceInfo.length && !creep.memory.currentCarrierSourceId; i++) {
                 var sourceId = sourceInfo[i];
-                var sourceObj = Game.getObjectById(sourceId);
+                sourceObj = Game.getObjectById(sourceId);
                 if(sourceObj.addCreepCarrierStorage(creep)) {
                     creep.memory.currentCarrierSourceContainerId = Memory.sources[sourceId].sourceContainer.containerId;
                     creep.memory.currentCarrierSourceId = sourceId;
@@ -126,7 +189,8 @@ module.exports.functions = {
         }
         
         if(!containerObj) {
-            console.log(creep.name + ": No container Id found for carrier");
+            if(sourceObj)
+            console.log("creep.actions: " + creep.name + ": No container Id found for carrier");
             return 0;
         }
         
@@ -173,6 +237,13 @@ module.exports.functions = {
     },
     
     getClosestEnergyStorage : function(creep, args) {
+        var spawnRoom = Game.getObjectById(creep.memory.spawnId).room.name;
+        if(creep.room.name != spawnRoom) {
+
+            var exit = creep.room.findExitTo(spawnRoom);
+            creep.moveTo(creep.pos.findClosestByRange(exit));
+            return 0;
+        }
         var storageId = creep.getClosestEnergyStorageId(args.priority);
         var storageObj = Game.getObjectById(storageId);
         if(!storageId || ! storageObj) {
@@ -232,6 +303,7 @@ module.exports.functions = {
             delete creep.memory.currentTargetStructureId;
             return 1;
         }
+
         if(transferCode == ERR_NOT_IN_RANGE) {
             creep.moveTo(structure);
             return 0;
@@ -316,16 +388,39 @@ module.exports.functions = {
             delete creep.memory.currentRepairId;
             return 1;
         }
-        var repairId = creep.getRepairId();
+
+        var repairId;
+
+        if(this.memory.currentRepairId) {
+            var repairObjMem = Game.getObjectById(this.memory.currentRepairId);
+        
+            if(repairObjMem && repairObjMem.hits < repairObjMem.hitsMax && repairObjMem.hits <= constants.repairCutoff) {
+                repairId = this.memory.currentRepairId;
+            } else {
+                delete this.memory.currentRepairId;
+            }
+        }
+    
+        var structureArr = this.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (structure) => (structure.hits < structure.hitsMax) && (structure.hits <= constants.criticalRepairCutoff)
+        });
+    
+    
+        if(!structureArr) {
+            structureArr = this.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (structure) => (structure.hits < structure.hitsMax) && (structure.hits <= constants.repairCutoff)
+            });
+        }
+        
+        if (structureArr) {
+            this.memory.currentRepairId = structureArr.id;
+            repairId = this.memory.currentRepairId;
+        }
         if(!repairId) {
             delete creep.memory.currentRepairId;
             return -1;
         }
         var repairObj = Game.getObjectById(repairId);
-        if(!repairObj) {
-            delete creep.memory.currentRepairId;
-            return -1;
-        }
         
         var repairCode = creep.repair(repairObj);
         if(repairCode == ERR_NOT_IN_RANGE) {
@@ -346,12 +441,11 @@ module.exports.functions = {
     travelToRoom : function(creep, args) {
         var roomName = creep.memory.targetRoom;
         if(creep.room.name == roomName) {
-            console.log(creep.name + " found their way to room " + roomName);
-            return 1;
+            return actionReturnVal.nextAction;
         } else {
             var exit = creep.room.findExitTo(roomName);
             creep.moveTo(creep.pos.findClosestByRange(exit));
-            return 0;
+            return actionReturnVal.sameAction;
         }
     },
     
@@ -369,5 +463,62 @@ module.exports.functions = {
             return 0;
         }
         return -2
+    }
+}
+
+
+//// This is the main loop for creep acting. Each action will return one of a number of values
+
+Creep.prototype.act = function() {
+    if(!this.memory.action) {
+        console.log(this.name + " has no actions");
+        this.setupRole(this.memory.role);
+        return;
+    }
+    
+    var currentAction = this.memory.action.currentAction;
+    if(!currentAction) {
+        console.log("creep.action: " + this.name + " has an error performing action " + currentAction);
+        return;
+    }
+    
+    if(!this.memory.action.actions) {
+        console.log(this.name + " has no actions");
+        if(this.memory.role) {
+            console.log("creep.action: " + "Attempting to setup creep again with role " + this.memory.role);
+            this.setupRole(this.memory.role);
+        }
+        return;
+    }
+    
+    var returnVal = 0;
+    var currentActionObject = this.memory.action.actions[currentAction];
+
+    var actionFunction = currentActionObject.action;
+    if(!(typeof module.exports.functions[actionFunction] === "function")) {
+        console.log("creep.action: " + this.name + " Action " + actionFunction + " is not a function");
+        return;
+    }
+    var args = currentActionObject.args;
+    if(!args) {
+        args = {};
+    }
+    
+    returnVal = module.exports.functions[actionFunction](this, args);
+    if(returnVal == actionReturnVal.nextAction) {
+        var nextAction = currentActionObject.next;
+        if(nextAction) {
+            this.memory.action.currentAction = nextAction;
+            currentAction = this.memory.action.currentAction;
+        }
+    } else if(returnVal == -3 || (this.ticksToLive < 50 && this.memory.role != 'powerHarvester' && this.memory.role != 'expansionPowerHarvester')) {
+        //Remove the creep
+        if(!(this.memory.role == 'returnEnergyAndDie')){
+            console.log(this.name + " is removing itself with role " + this.memory.role);
+            this.memory.role = 'returnEnergyAndDie';
+            this.setupRole(this.memory.role);
+        }
+    } else {
+        //repeat
     }
 }

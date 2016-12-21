@@ -11,7 +11,9 @@ const LOG_DEBUG = false;
 module.exports.repairCutoff = 10000;
 module.exports.criticalRepairCutoff = 100;
 module.exports.maxCreeps = 16;
+module.exports.test = "hello";
 
-module.exports.ERR_SOURCES_FULL = -1;
-module.exports.ERR_SOURCES_NO_ENERGY = -2;
+module.exports.ERR_SOURCES_FULL = -100;
+module.exports.ERR_SOURCES_NO_ENERGY = -200;
 module.exports.ERR_NO_CONSTRUCTION = -900;
+module.exports.ERR_ROOM_NOT_MAPPED = -901;

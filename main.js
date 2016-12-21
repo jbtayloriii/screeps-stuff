@@ -1,6 +1,5 @@
 var roleBase = require('role.base');
 var creepCreator = require('room.creepCreator');
-var creepAction = require('creep.action');
 var creepActions = require('creep.actions');
 var memoryMain = require('memory.main');
 
@@ -12,16 +11,17 @@ var spawnManager = require('spawn.manager');
 
 var testLog = require('testLog');
 
-var memorySpawn = require('memory.spawn');
-
 module.exports.loop = function () {
     //console.log(Game.time);
-    
-    var spawn = Game.spawns['spawn1'];
+     
+    var spawns = Game.spawns;
+    for(var spawnName in spawns) {
+        var spawn = Game.spawns[spawnName];
+        spawnManager.manage(spawn);
+    }
     
     testLog.testLogLoopFunc();
     
-    spawnManager.manage(spawn);
     
     //Refresh indices and everything, switch to true to do a hard reset
     memoryMain.refreshMemory(false);

@@ -12,6 +12,7 @@ var creepActions = require('creep.actions');
 var journal = require('log.journal');
 var memoryExpansion = require('memory.expansions');
 var memoryOwned = require('memory.ownedRooms');
+//var testf = require('room.test');
 
 
 var testLog = {
@@ -19,13 +20,13 @@ var testLog = {
     
     testLogLoopFunc : function() {
         return;
-        var roomName = 'W73S47';
-        for(var key in memoryOwned.getExpansions(roomName)) {
-            console.log(key);
+        console.log("hey there");
+        for(var i = 0; i < 75; i++) {
+            journal.addEntry("testing " + i);
         }
-        return;
-        console.log(memoryExpansion.createNewExpansion('W73S47','W74S47'));
-        console.log(memoryExpansion.getOpenSources(roomName));
+
+        var expName = 'W74S47';
+        //console.log(memoryExpansion.getClaimerName(expName));
     }
 }
 
